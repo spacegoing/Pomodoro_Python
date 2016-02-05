@@ -4,11 +4,11 @@ from datetime import datetime
 import time
 import os
 import json
+from Alarm import Alarm, Behavior
 from pprint import pprint
 
 # Todo: Bad design. Functional Coupling with another module?
 from generateSchemeFuncs import pomo_Algo
-from Alarm.Alarm import show_Remaining_Time
 
 # Below are all global variables
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -24,6 +24,71 @@ Break_Modes = [long_Break_Mode, short_Break_Mode]
 Work_Modes = [work_Mode]
 Work_Sound = "/Users/spacegoing/Music/网易云音乐/Emma Stevens - A Place Called You.mp3"
 Break_Sound = "/Users/spacegoing/Music/网易云音乐/Emily Grace - Mr Parker.mp3"
+
+
+class Pomo_Alarm_Behavior(Behavior):
+    # TODO: should be written into config file
+    def __init__(self, start_time, end_time, mode):
+        '''
+
+        :param start_time: datetime.time()
+        :param end_time: datetime.time()
+        :param mode: string. mode string.
+        :return:
+        '''
+        self.short_Break_Mode = 'pomo_Short_Break_Mode'
+        self.long_Break_Mode = 'pomo_Long_Break_Mode'
+        self.work_Mode = 'pomo_Work_Mode'
+        self.stop_Mode = 'pomo_Stop_Mode'
+        self.pomo_Modes = [self.short_Break_Mode, self.long_Break_Mode, self.work_Mode, self.stop_Mode]
+        self.Break_Modes = [self.long_Break_Mode, self.short_Break_Mode]
+        self.Work_Modes = [self.work_Mode]
+        self.Work_Sound = "/Users/spacegoing/Music/网易云音乐/Emma Stevens - A Place Called You.mp3"
+        self.Break_Sound = "/Users/spacegoing/Music/网易云音乐/Emily Grace - Mr Parker.mp3"
+
+        self.start_time = start_time
+        self.end_time = end_time
+        self.curr_mode = mode
+
+    # Todo: if startwith 0 only display MS
+    def delta_to_HMS(self, timedelta):
+        return str(timedelta).split('.')[0]
+
+    def play_Break_Sound(self, Break_Sound):
+        os.system("open '" + Break_Sound + "'")
+
+    def play_Work_Sound(self, Work_Sound):
+        os.system("open '" + Work_Sound + "'")
+
+    def alarm_Actions(self, mode):
+        if mode in self.Break_Modes:
+            self.play_Break_Sound(self.Break_Sound)
+        elif mode in self.Work_Modes:
+            self.play_Work_Sound(self.Work_Sound)
+
+    def enter_behavior(self):
+        print("Current Mode: %s    From %s to %s"
+              % (self.curr_mode,
+                 self.delta_to_HMS(self.start_time),
+                 self.delta_to_HMS(self.end_time)
+                 ), flush=True
+              )
+        self.alarm_Actions(self.curr_mode)
+
+    def in_timer_behavior(self):
+        """
+
+        :param curr: datetime.datetime object
+        :param end: datetime.datetime object
+        :return:
+        """
+        curr = datetime.now().time()
+        time_Remaining = timeParser(str(self.end_time)) - timeParser(str(curr))
+        print('\rTime Remaining: %s' % str(time_Remaining).split('.')[0], end='', flush=True)
+
+    def exit_behavior(self):
+        print('\r', end='', flush=True)
+
 
 # Todo: if startwith 0 only display MS
 def delta_to_HMS(timedelta):
@@ -135,44 +200,17 @@ def read_Scheme_JSON(name, mode_Type, is_Dynamic_Scheme):
     return execute_Timetable, execute_Modetable
 
 
-def play_Break_Sound(Break_Sound):
-    os.system("open '" + Break_Sound + "'")
-
-
-def play_Work_Sound(Work_Sound):
-    os.system("open '" + Work_Sound + "'")
-
-
-def alarm_Actions(mode):
-    if mode in Break_Modes:
-        play_Break_Sound(Break_Sound)
-    elif mode in Work_Modes:
-        play_Work_Sound(Work_Sound)
-
-
 def pomo_Alarm(name, mode_Type, is_Dynamic_Scheme):
     execute_Timetable, execute_Modetable \
         = read_Scheme_JSON(name, mode_Type, is_Dynamic_Scheme)
 
     currentTime = datetime.now().time()
+
     # Stop when the day (timetable) end.
     for start_end_period, mode in zip(execute_Timetable, execute_Modetable):
-        if currentTime <= start_end_period[1]:
-            alarm_Actions(mode)  # activate the current mode
-            print("Current Mode: %s    From %s to %s"
-                  % (mode,
-                     delta_to_HMS(start_end_period[0]),
-                     delta_to_HMS(start_end_period[1])
-                     ), flush=True
-                  )
-            while True:
-                time.sleep(1)
-                currentTime = datetime.now().time()
-
-                show_Remaining_Time(currentTime, start_end_period[1])
-                if currentTime >= start_end_period[1]:  # If the current mode timeout
-                    print('\r', end='', flush=True)  # Cleaning Remaining Time
-                    break  # Jump to the next time period
+        pomo_alarm = Pomo_Alarm_Behavior(start_end_period[0], start_end_period[1], mode)
+        alarm = Alarm(pomo_alarm)
+        alarm.timer(end_datetime=start_end_period[1])
 
 
 ##
