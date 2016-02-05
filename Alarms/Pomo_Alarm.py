@@ -4,8 +4,8 @@ from datetime import datetime
 import time
 import os
 import json
-from Alarm import Alarm, Behavior
 from pprint import pprint
+from Alarms.Alarm import Alarm,Behavior
 
 # Todo: Bad design. Functional Coupling with another module?
 from generateSchemeFuncs import pomo_Algo
@@ -36,11 +36,10 @@ class Pomo_Alarm_Behavior(Behavior):
         :param mode: string. mode string.
         :return:
         '''
+        super().__init__()
         self.short_Break_Mode = 'pomo_Short_Break_Mode'
         self.long_Break_Mode = 'pomo_Long_Break_Mode'
         self.work_Mode = 'pomo_Work_Mode'
-        self.stop_Mode = 'pomo_Stop_Mode'
-        self.pomo_Modes = [self.short_Break_Mode, self.long_Break_Mode, self.work_Mode, self.stop_Mode]
         self.Break_Modes = [self.long_Break_Mode, self.short_Break_Mode]
         self.Work_Modes = [self.work_Mode]
         self.Work_Sound = "/Users/spacegoing/Music/网易云音乐/Emma Stevens - A Place Called You.mp3"
@@ -140,14 +139,14 @@ def dynamic_Pomo_Scheme(execute_Timetable, execute_Modetable,
     current_Time = datetime.now().time()
 
     len_Scheme = len(execute_Timetable)
-    for pomo_start_at_period in range(len_Scheme):
-        period_end_time = execute_Timetable[pomo_start_at_period][1]
+    for period_index in range(len_Scheme):
+        period_end_time = execute_Timetable[period_index][1]
 
         if current_Time <= period_end_time:
-            if execute_Modetable[pomo_start_at_period] in pomo_Modes:
+            if execute_Modetable[period_index] in pomo_Modes:
 
                 # Find continuous Pomo Modes start-end time
-                for i in range(pomo_start_at_period, len_Scheme):
+                for i in range(period_index, len_Scheme):
                     if execute_Modetable[i] not in pomo_Modes:
                         end_time = execute_Timetable[i][0]  # Start time of this period
                         pomo_end_at_period = i
@@ -163,7 +162,7 @@ def dynamic_Pomo_Scheme(execute_Timetable, execute_Modetable,
 
                         # replace previous Pomo Modes Period
                         replace_deprecated_Pomo_Period(execute_Plan,
-                                                       pomo_start_at_period,
+                                                       period_index,
                                                        pomo_end_at_period,
                                                        execute_Timetable,
                                                        execute_Modetable)

@@ -2,7 +2,7 @@ from datetime import datetime
 import time
 
 
-class Alarm:
+class Alarm(object):
     def __init__(self, Behavior):
         '''
 
@@ -13,7 +13,7 @@ class Alarm:
 
     def timer(self, seconds=0, end_datetime=0):
         '''
-        Only accept 1 argument
+        Only accept 1 argument, must be explicitly declared
         Either sleep seconds Or sleep until end_datetime.
         :param seconds: int
         :param end_datetime: datetime.time
