@@ -202,9 +202,10 @@ def pomo_Alarm(name, mode_Type, is_Dynamic_Scheme):
 
     # Stop when the day (timetable) end.
     for start_end_period, mode in zip(execute_Timetable, execute_Modetable):
-        pomo_alarm = Pomo_Alarm_Behavior(start_end_period[0], start_end_period[1], mode)
-        alarm = Alarm(pomo_alarm)
-        alarm.timer(end_datetime=start_end_period[1])
+        if currentTime<=start_end_period[1]:
+            pomo_alarm = Pomo_Alarm_Behavior(start_end_period[0], start_end_period[1], mode)
+            alarm = Alarm(pomo_alarm)
+            alarm.timer(end_datetime=start_end_period[1])
 
 
 ##
