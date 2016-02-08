@@ -1,0 +1,25 @@
+Leader Key & Cancel Key
+-----
+M-p: Leader Key
+After this key comb stroke, a list of shortcuts will be printed in console.
+M-g: Cancel Key
+Cancel intermediate commands
+
+Operations
+----
+#### Basic Ops
+p: pause
+r: resume
+z: stop
+s: start
+
+#### Pomo_Log ops
+st: Show stats till now
+
+#### Scheme ops
+lsta: Show all pomos today
+lsr: Show remaining pomos
+Modes
+----
+S: Scheme Mode
+A: Alarm Mode
