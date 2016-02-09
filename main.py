@@ -1,4 +1,4 @@
-from Pomo_Alarm import pomo_Alarm
+from Pomo_Daily_Alarm import pomo_Alarm
 from generateSchemeFuncs import gen_Scheme
 from writeConfigFuncs import createScehma, createConfigJSON
 from StatMining.DailySchemeStats import show_Pomo_Stats

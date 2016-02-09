@@ -22,7 +22,7 @@ class ConfigReader:
 
 class DailyConfigReader(ConfigReader):
     def __init__(self):
-        super(DailyConfigReader, self).__init__()
+        super().__init__()
         try:
             self._Daily_Scheme = self._Daily_Scheme_Config['DailyScheme']
             self._MISC = self._Daily_Scheme_Config['MISC']

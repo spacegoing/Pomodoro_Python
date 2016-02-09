@@ -42,6 +42,10 @@ class Alarm():
 
 
 class AlarmController(Thread):
+    '''
+    This class should be passed to KeyboardListener under current implementation.
+    It will be refractored to Pomo_Alarm in the future.
+    '''
     def __init__(self):
         super().__init__()
         self.lock = lock

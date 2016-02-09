@@ -1,91 +1,112 @@
-##
+# -*- coding: utf-8 -*-
+__author__ = 'spacegoing'
 from dateutil.parser import parse as timeParser
-from datetime import datetime
-import os
-import json
-from Alarms.Alarm import Alarm, Behavior, AlarmController
-from ConsoleTools.KeyboardListener import KbdListener
-
-# Todo: Bad design. Functional Coupling with another module?
-from generateSchemeFuncs import pomo_Algo
+from datetime import timedelta, datetime
+import json, os
 
 # Below are all global variables
 file_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.abspath(os.path.join(file_path, os.path.pardir))
-
 # Todo: Same as generateSchemeFuncs, should be changed to mode params
 short_Break_Mode = 'pomo_Short_Break_Mode'
 long_Break_Mode = 'pomo_Long_Break_Mode'
 work_Mode = 'pomo_Work_Mode'
 stop_Mode = 'pomo_Stop_Mode'
 pomo_Modes = [short_Break_Mode, long_Break_Mode, work_Mode, stop_Mode]
-Break_Modes = [long_Break_Mode, short_Break_Mode]
-Work_Modes = [work_Mode]
-Work_Sound = "/Users/spacegoing/Music/网易云音乐/Emma Stevens - A Place Called You.mp3"
-Break_Sound = "/Users/spacegoing/Music/网易云音乐/Emily Grace - Mr Parker.mp3"
 
 
-class Pomo_Alarm_Behavior(Behavior):
-    # TODO: should be written into config file
-    def __init__(self, start_time, end_time, mode):
-        '''
+def minutes_To_Timedelta(mins):
+    """
 
-        :param start_time: datetime.time()
-        :param end_time: datetime.time()
-        :param mode: string. mode string.
-        :return:
-        '''
-        super().__init__()
-        self.short_Break_Mode = 'pomo_Short_Break_Mode'
-        self.long_Break_Mode = 'pomo_Long_Break_Mode'
-        self.work_Mode = 'pomo_Work_Mode'
-        self.Break_Modes = [self.long_Break_Mode, self.short_Break_Mode]
-        self.Work_Modes = [self.work_Mode]
-        self.Work_Sound = "/Users/spacegoing/Music/网易云音乐/Emma Stevens - A Place Called You.mp3"
-        self.Break_Sound = "/Users/spacegoing/Music/网易云音乐/Emily Grace - Mr Parker.mp3"
+    :param mins: int.
+    :return: timedelta object
+    """
+    return timedelta(minutes=mins)
 
-        self.start_time = start_time
-        self.end_time = end_time
-        self.curr_mode = mode
 
-    # Todo: if startwith 0 only display MS
-    def delta_to_HMS(self, timedelta):
-        return str(timedelta).split('.')[0]
+def pomo_Daily_Scheme_Algo(start, end,
+                           short_Break_Mode, long_Break_Mode,
+                           work_Mode, stop_Mode,
+                           pomo_Work_Time, pomo_Short_Break,
+                           pomo_Long_Break, pomo_Long_Break_Period):
+    """
 
-    def play_Break_Sound(self):
-        os.system("open '" + self.Break_Sound + "'")
+    :param start:
+    :param end:
 
-    def play_Work_Sound(self):
-        os.system("open '" + self.Work_Sound + "'")
+    :param short_Break_Mode:
+    :param long_Break_Mode:
+    :param work_Mode:
+    :param stop_Mode:
 
-    def alarm_Actions(self):
-        if self.curr_mode in self.Break_Modes:
-            self.play_Break_Sound()
-        elif self.curr_mode in self.Work_Modes:
-            self.play_Work_Sound()
+    :param pomo_Long_Break: int. e.g. 10 mins.
+    :param pomo_Long_Break_Period: int. e.g. Every 4 cycle of pomos.
+    :param pomo_Short_Break: int. e.g. 5 mins.
+    :param pomo_Work_Time: int. How long a work cycle is. e.g. 25 mins.
 
-    def enter_behavior(self):
-        print("Current Mode: %s    From %s to %s"
-              % (self.curr_mode,
-                 self.delta_to_HMS(self.start_time),
-                 self.delta_to_HMS(self.end_time)
-                 ), flush=True
-              )
-        self.alarm_Actions()
+    :return:
+    pomo_Execute_Plan: 2d List of Strings. [[Start, pomo_Mode],...]
+    """
 
-    def in_timer_behavior(self):
-        """
+    pomo_Mode_Vector = [work_Mode, short_Break_Mode] * pomo_Long_Break_Period
+    pomo_Mode_Vector[-1] = long_Break_Mode
 
-        :param curr: datetime.datetime object
-        :param end: datetime.datetime object
-        :return:
-        """
-        curr = datetime.now().time()
-        time_Remaining = timeParser(str(self.end_time)) - timeParser(str(curr))
-        print('\rTime Remaining: %s' % str(time_Remaining).split('.')[0], end='', flush=True)
+    pomo_Time_Vector = [pomo_Work_Time, pomo_Short_Break] * pomo_Long_Break_Period
+    pomo_Time_Vector[-1] = pomo_Long_Break
+    pomo_Time_Vector = [minutes_To_Timedelta(i) for i in pomo_Time_Vector]
 
-    def exit_behavior(self):
-        print('\r', end='', flush=True)
+    count = 0
+    reset_Count = len(pomo_Time_Vector) - 1
+    pomo_Execute_Plan = list()
+
+    while True:
+        if start + pomo_Time_Vector[count] < end:
+            pomo_Execute_Plan.append([start, pomo_Mode_Vector[count]])
+            start += pomo_Time_Vector[count]
+            count += 1
+
+            if count > reset_Count:
+                count = 0
+        else:
+            pomo_Execute_Plan.append([start, pomo_Mode_Vector[count]])
+            pomo_Execute_Plan.append([end, stop_Mode])
+            break
+
+    return pomo_Execute_Plan
+
+
+def pomo_Gen_Execute_Plan(types_To_Apply_Pomo, time_Table, type_Table, Other_Params, pomo_Modes):
+    """
+
+    :param time_Table: 2d List of Strings. %H:%M
+                        Must start from 0:00, end at End_Of_Day_Symbol
+    :param type_Table: 1d List of Strings.
+    :param types_To_Apply_Pomo: 1d List of Strings. Types pomo algo apply on.
+
+    :param Other_Params:
+    :param pomo_Modes:
+    :return:
+    pomo_Execute_Plan: [[start, end, type]...]
+    """
+    pomo_Params = Other_Params['Pomo_Params']
+    pomo_Execute_Plan = list()
+
+    for [start, end], t in zip(time_Table, type_Table):
+        if t in types_To_Apply_Pomo:
+            start = timeParser(start)
+            end = timeParser(end)
+
+            execute_Plan = pomo_Daily_Scheme_Algo(start, end, *pomo_Modes, **pomo_Params)
+            # Loop: Reformat Execute Plan to [Start, End, Mode] format.
+            lenPlan = len(execute_Plan)
+            for i in range(lenPlan - 1):
+                pomo_Execute_Plan.append([str(execute_Plan[i][0].time()),  # Start time
+                                          str(execute_Plan[i + 1][0].time()),  # End time
+                                          str(execute_Plan[i][1])])  # Mode
+        else:
+            pomo_Execute_Plan.append([start, end, t])
+
+    return pomo_Execute_Plan
 
 
 def replace_deprecated_Pomo_Period(execute_Plan,
@@ -152,12 +173,12 @@ def dynamic_Pomo_Scheme(execute_Timetable, execute_Modetable,
 
                         # Recalculate Pomo timetable
                         # end_time now is datetime.time() object
-                        # argument of pomo_Algo require datetime.datetime() object
+                        # argument of pomo_Daily_Scheme_Algo require datetime.datetime() object
                         end_time = timeParser(str(end_time))
                         start_time = timeParser(str(current_Time))
 
-                        execute_Plan = pomo_Algo(start_time, end_time,
-                                                 *pomo_Modes, **pomo_Params)
+                        execute_Plan = pomo_Daily_Scheme_Algo(start_time, end_time,
+                                                              *pomo_Modes, **pomo_Params)
 
                         # replace previous Pomo Modes Period
                         replace_deprecated_Pomo_Period(execute_Plan,
@@ -191,28 +212,3 @@ def read_Scheme_JSON(name, mode_Type, is_Dynamic_Scheme):
                             pomo_Modes, scheme_Params)
 
     return execute_Timetable, execute_Modetable
-
-
-def pomo_Alarm(name, mode_Type, is_Dynamic_Scheme):
-    execute_Timetable, execute_Modetable \
-        = read_Scheme_JSON(name, mode_Type, is_Dynamic_Scheme)
-
-    currentTime = datetime.now().time()
-    kbd_lstn = KbdListener(AlarmController)
-    kbd_lstn.start()
-
-    # Stop when the day (timetable) end.
-    for start_end_period, mode in zip(execute_Timetable, execute_Modetable):
-        if currentTime <= start_end_period[1]:
-            pomo_alarm = Pomo_Alarm_Behavior(start_end_period[0], start_end_period[1], mode)
-            alarm = Alarm(pomo_alarm)
-            alarm.timer(end_datetime=start_end_period[1])
-
-
-
-##
-if __name__ == '__main__':
-    name = 'Home_Pomo_Scheme'
-    mode_Type = 'Pomodoro'
-    is_Dynamic_Scheme = True
-    pomo_Alarm(name, mode_Type, is_Dynamic_Scheme)
