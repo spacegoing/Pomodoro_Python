@@ -1,11 +1,10 @@
 ##
 from dateutil.parser import parse as timeParser
 from datetime import datetime
-import time
 import os
 import json
-from pprint import pprint
-from Alarms.Alarm import Alarm,Behavior
+from Alarms.Alarm import Alarm, Behavior, AlarmController
+from ConsoleTools.KeyboardListener import KbdListener
 
 # Todo: Bad design. Functional Coupling with another module?
 from generateSchemeFuncs import pomo_Algo
@@ -199,13 +198,16 @@ def pomo_Alarm(name, mode_Type, is_Dynamic_Scheme):
         = read_Scheme_JSON(name, mode_Type, is_Dynamic_Scheme)
 
     currentTime = datetime.now().time()
+    kbd_lstn = KbdListener(AlarmController)
+    kbd_lstn.start()
 
     # Stop when the day (timetable) end.
     for start_end_period, mode in zip(execute_Timetable, execute_Modetable):
-        if currentTime<=start_end_period[1]:
+        if currentTime <= start_end_period[1]:
             pomo_alarm = Pomo_Alarm_Behavior(start_end_period[0], start_end_period[1], mode)
             alarm = Alarm(pomo_alarm)
             alarm.timer(end_datetime=start_end_period[1])
+
 
 
 ##

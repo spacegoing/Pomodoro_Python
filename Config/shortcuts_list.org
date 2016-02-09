@@ -8,6 +8,7 @@ Cancel intermediate commands
 Operations
 ----
 #### Basic Ops
+l: list all commands
 p: pause
 r: resume
 z: stop
