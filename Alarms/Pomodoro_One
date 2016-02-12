@@ -4,6 +4,7 @@ import time
 import os
 from Alarms.Alarm import Alarm, Behavior, AlarmController
 from ConsoleTools.KeyboardListener import KbdListener
+from itertools import cycle
 
 # Todo: Same as generateSchemeFuncs, should be changed to mode params
 short_Break_Mode = 'pomo_Short_Break_Mode'
@@ -83,20 +84,6 @@ def pomo_one_genScheme(pomoParams):
     modeTable is a generator, a infinite repeating of [work_time,short_break_time,work_time,long_break_time],depending
     on your pomo_Long_Break_Period.
     """
-
-    def cycle(iterable):
-        """
-        cycle('ABCD') --> A B C D A B C D A B C D ...
-        :param a iterable data type
-        :return: a (infinite) generator which cycle in the pattern of 'ABCD'
-        """
-        saved = []
-        for element in iterable:
-            yield element
-            saved.append(element)
-        while saved:
-            for element in saved:
-                  yield element
 
     pomo_Mode_Vector = [work_Mode, short_Break_Mode] * pomoParams['pomo_Long_Break_Period']
     pomo_Mode_Vector[-1] = long_Break_Mode
