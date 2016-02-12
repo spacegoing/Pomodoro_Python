@@ -16,6 +16,13 @@ Work_Modes = [work_Mode]
 Work_Sound = "/Users/hhxjzyr/Music/网易云音乐/Alan Silvestri - Forrest Gump Suite.mp3"
 Break_Sound = "/Users/hhxjzyr/Music/网易云音乐/Evanescence - My Immortal.mp3"
 
+pomoParams = dict()
+pomoParams['pomo_Work_Time'] = 45
+pomoParams['pomo_Short_Break'] = 10
+# Every pomoLongRelaxPeriod have a long break
+pomoParams['pomo_Long_Break_Period'] = 2
+pomoParams['pomo_Long_Break'] = 20
+
 class Pomodoro_One_Behavior(Behavior):
     def __init__(self,seconds,mode):
 
@@ -117,10 +124,4 @@ def pomo_one_Alarm(pomoParams):
 
 ##
 if __name__=='__main__':
-    pomoParams = dict()
-    pomoParams['pomo_Work_Time'] = 45
-    pomoParams['pomo_Short_Break'] = 10
-    # Every pomoLongRelaxPeriod have a long break
-    pomoParams['pomo_Long_Break_Period'] = 2
-    pomoParams['pomo_Long_Break'] = 20
     pomo_one_Alarm(pomoParams=pomoParams)
